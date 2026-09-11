@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="hu">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Acél keresztmetszet ellenőrző - EC3</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='styles.css') }}"
+    >
+</head>
+
+<body>
+
+    <div class="app">
+
+        <header class="fejlec">
+            <div>
+                <h1>Acél keresztmetszet ellenőrző - EC3</h1>
+            </div>
+
+            <div class="szabvany">
+                MSZ EN 1993-1-1:2009 + MSZ EN 1993-1-1:2005/A1:2015
+            </div>
+        </header>
+
+        <nav class="tabok">
+            <button class="tab aktiv" onclick="fulValtas('projekt', this)">Projekt</button>
+    <button class="tab" onclick="fulValtas('keresztmetszet', this)">Keresztmetszet</button>
+    <button class="tab" onclick="fulValtas('igenybevetelek', this)">Igénybevételek</button>
+    <button class="tab" onclick="fulValtas('eredmenyek', this)">Eredmények</button>
+        </nav>
+
+        <main>
+
+                <section id="projekt" class="ful-tartalom aktiv-ful">
+
+        <section class="kartya">
+            <h2>Projektadatok</h2>
+
+            <div class="urlap-sor">
+                <label>Projekt neve</label>
+                <input type="text">
+            </div>
+
+            <div class="urlap-sor">
+                <label>Projekt címe</label>
+                <input type="text">
+            </div>
+
+            <div class="urlap-sor">
+                <label>Munkaszám</label>
+                <input type="text">
+            </div>
+
+            <div class="urlap-sor">
+                <label>Tervező</label>
+                <input type="text">
+            </div>
+
+            <div class="urlap-sor">
+                <label>Megrendelő</label>
+                <input type="text">
+            </div>
+        </section>
+
+        <section class="kartya">
+            <h2>Szabványi alap</h2>
+            <p>MSZ EN 1993-1-1:2009 + MSZ EN 1993-1-1:2005/A1:2015</p>
+        </section>
+
+    </section>
+
+
+    <section id="keresztmetszet" class="ful-tartalom">
+
+    <div class="keresztmetszet-grid">
+
+        <section class="kartya">
+
+            <h2>Szelvény és anyag</h2>
+
+            <div class="urlap-sor">
+                <label>Család</label>
+                <select id="csalad" onchange="csaladValtas()">
+
+    {% for nev in csaladok %}
+
+        <option
+            value="{{ nev }}"
+            {% if nev == csalad %}selected{% endif %}
+        >
+            {{ nev }}
+        </option>
+
+    {% endfor %}
+
+</select>
+            </div>
+
+            <div class="urlap-sor">
+                <label>Szelvény</label>
+                <select id="szelveny" onchange="szelvenyValtas()">
+
+    {% for nev in szelvenyek %}
+
+        <option
+            value="{{ nev }}"
+            {% if nev == szelveny_nev %}selected{% endif %}
+        >
+            {{ nev }}
+        </option>
+
+    {% endfor %}
+
+</select>
+            </div>
+
+            <div class="urlap-sor">
+                <label>Anyagminőség</label>
+                <select id="anyag">
+                    <option value="S235" {% if anyag == "S235" %}selected{% endif %}>S235</option>
+                    <option value="S275" {% if anyag == "S275" %}selected{% endif %}>S275</option>
+                    <option value="S355" {% if anyag == "S355" %}selected{% endif %}>S355</option>
+                </select>
+            </div>
+
+            <div class="urlap-sor">
+                <label>γM0</label>
+                <input type="number" value="1.0" step="0.1">
+            </div>
+
+            <div class="urlap-sor">
+                <label>η (nyírási horpadás)</label>
+                <input type="number" value="1.2" step="0.1">
+            </div>
+
+            <hr>
+
+            <h2>Szelvényjellemzők</h2>
+
+            <table class="adattabla">
+                <tr>
+                    <th>Jellemző</th>
+                    <th>Érték</th>
+                    <th>Egység</th>
+                </tr>
+
+                <tr><td>h</td><td>{{ szelveny["h"] }}</td><td>mm</td></tr>
+                <tr><td>b</td><td>{{ szelveny["b"] }}</td><td>mm</td></tr>
+                <tr><td>t<sub>w</sub></td><td>{{ szelveny["tw"] }}</td><td>mm</td></tr>
+<tr><td>t<sub>f</sub></td><td>{{ szelveny["tf"] }}</td><td>mm</td></tr>
+<tr><td>r</td><td>{{ szelveny["r"] }}</td><td>mm</td></tr>
+<tr><td>A</td><td>{{ szelveny["A"] }}</td><td>cm²</td></tr>
+<tr><td>I<sub>y</sub></td><td>{{ szelveny["Iy"] }}</td><td>cm⁴</td></tr>
+<tr><td>I<sub>z</sub></td><td>{{ szelveny["Iz"] }}</td><td>cm⁴</td></tr>
+<tr><td>W<sub>el,y</sub></td><td>{{ szelveny["Wel_y"] }}</td><td>cm³</td></tr>
+<tr><td>W<sub>pl,y</sub></td><td>{{ szelveny["Wpl_y"] }}</td><td>cm³</td></tr>
+<tr><td>W<sub>el,z</sub></td><td>{{ szelveny["Wel_z"] }}</td><td>cm³</td></tr>
+<tr><td>W<sub>pl,z</sub></td><td>{{ szelveny["Wpl_z"] }}</td><td>cm³</td></tr>
+<tr><td>A<sub>v,z</sub></td><td>{{ szelveny["Av_z"] }}</td><td>cm²</td></tr>
+<tr><td>A<sub>v,y</sub></td><td>{{ szelveny["Av_y"] }}</td><td>cm²</td></tr>
+            </table>
+
+        </section>
+
+
+        <section class="kartya">
+
+            <h2>Keresztmetszet - méretezett vázlat</h2>
+
+            <div class="szelveny-fej">
+                
+                
+            </div>
+
+            <div class="szelveny-rajz">
+
+                <svg viewBox="0 0 500 500" width="100%" height="500">
+
+                    {% set meretarany = 300 / [szelveny["h"], szelveny["b"]]|max %}
+
+{% set rajz_h = szelveny["h"] * meretarany %}
+{% set rajz_b = szelveny["b"] * meretarany %}
+{% set rajz_tw = szelveny["tw"] * meretarany %}
+{% set rajz_tf = szelveny["tf"] * meretarany %}
+
+{% set bal = 250 - rajz_b / 2 %}
+{% set felso = 250 - rajz_h / 2 %}
+{% set gerinc_bal = 250 - rajz_tw / 2 %}
+
+{% set r_px = szelveny["r"] * meretarany %}
+
+{% set jobb = bal + rajz_b %}
+{% set also = felso + rajz_h %}
+
+{% set web_bal = gerinc_bal %}
+{% set web_jobb = gerinc_bal + rajz_tw %}
+
+{% set felso_ov_alja = felso + rajz_tf %}
+{% set also_ov_teteje = also - rajz_tf %}
+
+
+<path
+    d="
+        M {{ bal }} {{ felso }}
+
+        L {{ jobb }} {{ felso }}
+        L {{ jobb }} {{ felso_ov_alja }}
+
+        L {{ web_jobb + r_px }} {{ felso_ov_alja }}
+
+        Q {{ web_jobb }} {{ felso_ov_alja }}
+          {{ web_jobb }} {{ felso_ov_alja + r_px }}
+
+        L {{ web_jobb }} {{ also_ov_teteje - r_px }}
+
+        Q {{ web_jobb }} {{ also_ov_teteje }}
+          {{ web_jobb + r_px }} {{ also_ov_teteje }}
+
+        L {{ jobb }} {{ also_ov_teteje }}
+        L {{ jobb }} {{ also }}
+
+        L {{ bal }} {{ also }}
+        L {{ bal }} {{ also_ov_teteje }}
+
+        L {{ web_bal - r_px }} {{ also_ov_teteje }}
+
+        Q {{ web_bal }} {{ also_ov_teteje }}
+          {{ web_bal }} {{ also_ov_teteje - r_px }}
+
+        L {{ web_bal }} {{ felso_ov_alja + r_px }}
+
+        Q {{ web_bal }} {{ felso_ov_alja }}
+          {{ web_bal - r_px }} {{ felso_ov_alja }}
+
+        L {{ bal }} {{ felso_ov_alja }}
+
+        Z
+    "
+    class="acel">
+</path>
+
+                    <!-- y tengely -->
+                    <line x1="70" y1="250" x2="430" y2="250" class="tengely"></line>
+
+                    <!-- z tengely -->
+                    <line x1="250" y1="40" x2="250" y2="460" class="tengely"></line>
+
+                    <text x="438" y="255">y</text>
+                    <text x="256" y="35">z</text>
+
+                    <!-- szélességi méret -->
+
+{% set meret_y = felso + rajz_h + 25 %}
+
+<line
+    x1="{{ bal }}"
+    y1="{{ meret_y }}"
+    x2="{{ bal + rajz_b }}"
+    y2="{{ meret_y }}"
+    class="meretvonal">
+</line>
+
+<line
+    x1="{{ bal }}"
+    y1="{{ meret_y - 10 }}"
+    x2="{{ bal }}"
+    y2="{{ meret_y + 10 }}"
+    class="meretvonal">
+</line>
+
+<line
+    x1="{{ bal + rajz_b }}"
+    y1="{{ meret_y - 10 }}"
+    x2="{{ bal + rajz_b }}"
+    y2="{{ meret_y + 10 }}"
+    class="meretvonal">
+</line>
+
+<text
+    x="250"
+    y="{{ meret_y + 25 }}"
+    text-anchor="middle">
+    b = {{ szelveny["b"] }} mm
+</text>
+
+
+<!-- magassági méret -->
+
+{% set meret_x = bal + rajz_b + 30 %}
+
+<line
+    x1="{{ meret_x }}"
+    y1="{{ felso }}"
+    x2="{{ meret_x }}"
+    y2="{{ felso + rajz_h }}"
+    class="meretvonal">
+</line>
+
+<line
+    x1="{{ meret_x - 10 }}"
+    y1="{{ felso }}"
+    x2="{{ meret_x + 10 }}"
+    y2="{{ felso }}"
+    class="meretvonal">
+</line>
+
+<line
+    x1="{{ meret_x - 10 }}"
+    y1="{{ felso + rajz_h }}"
+    x2="{{ meret_x + 10 }}"
+    y2="{{ felso + rajz_h }}"
+    class="meretvonal">
+</line>
+
+<text
+    x="{{ meret_x + 18 }}"
+    y="250"
+    text-anchor="middle"
+    transform="rotate(90 {{ meret_x + 18 }} 250)">
+    h = {{ szelveny["h"] }} mm
+</text>
+    h = {{ szelveny["h"] }} mm
+</text>
+
+                    <text
+    x="{{ gerinc_bal - 12 }}"
+    y="{{ felso + rajz_tf + 35 }}"
+    text-anchor="end">
+    t_w = {{ szelveny["tw"] }}
+</text>
+
+<text
+    x="{{ bal + 20 }}"
+    y="{{ felso + rajz_tf - 8 }}">
+    t_f = {{ szelveny["tf"] }}
+</text>
+
+                </svg>
+
+            </div>
+
+        </section>
+
+    </div>
+
+</section>
+
+
+    <section id="igenybevetelek" class="ful-tartalom">
+
+    <section class="kartya">
+
+        <h2>Tervezési igénybevételek</h2>
+
+        <div class="urlap-sor">
+            <label>N<sub>Ed</sub></label>
+            <input type="number" id="NEd" name="NEd" value="{{ NEd }}" step="any">
+            <span>kN</span>
+            <span class="magyarazat">pozitív = húzás, negatív = nyomás</span>
+        </div>
+
+        <div class="urlap-sor">
+            <label>V<sub>y,Ed</sub></label>
+            <input type="number" id="VyEd" name="VyEd" value="{{ VyEd }}" step="any">
+            <span>kN</span>
+            <span class="magyarazat">övvel párhuzamos nyírás</span>
+        </div>
+
+        <div class="urlap-sor">
+            <label>V<sub>z,Ed</sub></label>
+            <input type="number" id="VzEd" name="VzEd" value="{{ VzEd }}" step="any">
+            <span>kN</span>
+            <span class="magyarazat">gerinccel párhuzamos nyírás</span>
+        </div>
+
+        <div class="urlap-sor">
+            <label>M<sub>y,Ed</sub></label>
+            <input type="number" id="MyEd" name="MyEd" value="{{ MyEd }}" step="any">
+            <span>kNm</span>
+            <span class="magyarazat">főtengely körüli hajlítás</span>
+        </div>
+
+        <div class="urlap-sor">
+            <label>M<sub>z,Ed</sub></label>
+            <input type="number" id="MzEd" name="MzEd" value="{{ MzEd }}" step="any">
+            <span>kNm</span>
+            <span class="magyarazat">melléktengely körüli hajlítás</span>
+        </div>
+
+        <div class="urlap-sor">
+            <label>T<sub>Ed</sub></label>
+            <input type="number" id="TEd" name="TEd" value="{{ TEd }}" step="any">
+            <span>kNm</span>
+            <span class="magyarazat">
+                csavarónyomaték; nyitott szelvénynél VEM adat szükséges
+            </span>
+        </div>
+
+
+{% if eredmeny %}
+    <div class="kartya" style="margin-top: 20px;">
+        <h3>Nyomási keresztmetszeti ellenállás</h3>
+
+        <p>
+            N<sub>c,Rd</sub> =
+            {{ "%.2f"|format(eredmeny["Nc_Rd"]) }} kN
+        </p>
+
+        <p>
+            Kihasználtság =
+            {{ "%.1f"|format(eredmeny["szazalek"]) }} %
+        </p>
+
+        <p>
+            {% if eredmeny["megfelel"] %}
+                <strong>MEGFELEL</strong>
+            {% else %}
+                <strong>NEM FELEL MEG</strong>
+            {% endif %}
+        </p>
+    </div>
+    <div class="kartya" style="margin-top: 20px;">
+    <h3>Hajlítási ellenállás y-y</h3>
+
+    <p>
+        M<sub>y,Rd</sub> =
+        {{ "%.2f"|format(eredmeny["My_Rd"]) }} kNm
+    </p>
+
+    <p>
+        Kihasználtság =
+        {{ "%.1f"|format(eredmeny["szazalek_My"]) }} %
+    </p>
+
+    <p>
+        {% if eredmeny["megfelel_My"] %}
+            <strong>MEGFELEL</strong>
+        {% else %}
+            <strong>NEM FELEL MEG</strong>
+        {% endif %}
+    </p>
+</div>
+<div class="kartya" style="margin-top: 20px;">
+    <h3>Hajlítási ellenállás z-z</h3>
+
+    <p>
+        M<sub>z,Rd</sub> =
+        {{ "%.2f"|format(eredmeny["Mz_Rd"]) }} kNm
+    </p>
+
+    <p>
+        Kihasználtság =
+        {{ "%.1f"|format(eredmeny["szazalek_Mz"]) }} %
+    </p>
+
+    <p>
+        {% if eredmeny["megfelel_Mz"] %}
+            <strong>MEGFELEL</strong>
+        {% else %}
+            <strong>NEM FELEL MEG</strong>
+        {% endif %}
+    </p>
+</div>
+
+<div class="kartya" style="margin-top: 20px;">
+    <h3>Normálerő - hajlítás</h3>
+
+    <p>
+        Kihasználtság =
+        {{ "%.1f"|format(eredmeny["NMM_szazalek"]) }} %
+    </p>
+
+    <p>
+        {% if eredmeny["NMM_megfelel"] %}
+            <strong>MEGFELEL</strong>
+        {% else %}
+            <strong>NEM FELEL MEG</strong>
+        {% endif %}
+    </p>
+</div>
+
+<div class="kartya" style="margin-top: 20px;">
+    <h3>Nyírási ellenállás Vz</h3>
+
+    <p>
+        V<sub>z,Rd</sub> =
+        {{ "%.2f"|format(eredmeny["Vz_Rd"]) }} kN
+    </p>
+
+    <p>
+        Kihasználtság =
+        {{ "%.1f"|format(eredmeny["szazalek_Vz"]) }} %
+    </p>
+
+    <p>
+        {% if eredmeny["megfelel_Vz"] %}
+            <strong>MEGFELEL</strong>
+        {% else %}
+            <strong>NEM FELEL MEG</strong>
+        {% endif %}
+    </p>
+</div>
+
+<div class="kartya" style="margin-top: 20px;">
+    <h3>Nyírási ellenállás Vy</h3>
+
+    <p>
+        V<sub>y,Rd</sub> =
+        {{ "%.2f"|format(eredmeny["Vy_Rd"]) }} kN
+    </p>
+
+    <p>
+        Kihasználtság =
+        {{ "%.1f"|format(eredmeny["szazalek_Vy"]) }} %
+    </p>
+
+    <p>
+        {% if eredmeny["megfelel_Vy"] %}
+            <strong>MEGFELEL</strong>
+        {% else %}
+            <strong>NEM FELEL MEG</strong>
+        {% endif %}
+    </p>
+</div>
+
+{% if eredmeny["csavaras_figyelmeztetes"] %}
+<div class="kartya" style="margin-top: 20px;">
+    <h3>Csavarási ellenőrzés</h3>
+
+    <p>
+        T<sub>Ed</sub> =
+        {{ "%.2f"|format(eredmeny["TEd"]) }} kNm
+    </p>
+
+    <p>
+        <strong>{{ eredmeny["csavaras_figyelmeztetes"] }}</strong>
+    </p>
+</div>
+<div class="kartya" style="margin-top: 20px;">
+    <h3>Keresztmetszeti osztály</h3>
+
+    <p>
+        Öv osztálya:
+        <strong>{{ eredmeny["flange_class"] }}</strong>
+    </p>
+
+    <p>
+        Gerinc osztálya:
+        <strong>{{ eredmeny["web_class"] }}</strong>
+    </p>
+
+    <p>
+        Teljes keresztmetszet:
+        <strong>{{ eredmeny["section_class"] }}. osztály</strong>
+    </p>
+</div>
+{% endif %}
+{% endif %}
+    </section>
+
+</section>
+
+
+    <section id="eredmenyek" class="ful-tartalom">
+
+        <section class="kartya">
+
+            <h2>Eredmények</h2>
+
+            <p>Még nincs számítás.</p>
+
+        </section>
+
+    </section>
+
+        </main>
+
+        <footer class="also-sav">
+
+            <div class="bal-gombok">
+                <button>Projekt megnyitása</button>
+                <button>Projekt mentése</button>
+            </div>
+
+            <div class="jobb-gombok">
+                <button class="kiemelt" type="button" onclick="szamitasInditas()">SZÁMÍTÁS</button>
+                <button>PDF dokumentáció</button>
+            </div>
+
+        </footer>
+
+    </div>
+<script>
+    function fulValtas(fulId, gomb) {
+
+        const tartalmak = document.querySelectorAll(".ful-tartalom");
+        const gombok = document.querySelectorAll(".tab");
+
+        tartalmak.forEach(function(tartalom) {
+            tartalom.classList.remove("aktiv-ful");
+        });
+
+        gombok.forEach(function(tab) {
+            tab.classList.remove("aktiv");
+        });
+
+        document.getElementById(fulId).classList.add("aktiv-ful");
+        gomb.classList.add("aktiv");
+    }
+</script>
+<script>
+    function csaladValtas() {
+
+    const csalad = document.getElementById("csalad").value;
+
+    window.location.href =
+        "/?csalad=" + encodeURIComponent(csalad)
+        + "#keresztmetszet";
+}
+    function szelvenyValtas() {
+
+    const csalad = document.getElementById("csalad").value;
+    const szelveny = document.getElementById("szelveny").value;
+
+    window.location.href =
+        "/?csalad=" + encodeURIComponent(csalad)
+        + "&szelveny=" + encodeURIComponent(szelveny)
+        + "#keresztmetszet";
+}
+window.addEventListener("load", function() {
+
+    setTimeout(function() {
+
+        const gombok = document.querySelectorAll(".tab");
+
+        if (window.location.hash === "#keresztmetszet") {
+            fulValtas("keresztmetszet", gombok[1]);
+        }
+
+        if (window.location.hash === "#igenybevetelek") {
+            fulValtas("igenybevetelek", gombok[2]);
+        }
+
+        if (window.location.hash === "#eredmenyek") {
+            fulValtas("eredmenyek", gombok[3]);
+        }
+
+    }, 100);
+
+});
+function szamitasInditas() {
+
+    const csalad = document.getElementById("csalad").value;
+    const szelveny = document.getElementById("szelveny").value;
+    const anyag = document.getElementById("anyag").value;
+
+    const NEd = document.getElementById("NEd").value;
+    const VyEd = document.getElementById("VyEd").value;
+    const VzEd = document.getElementById("VzEd").value;
+    const MyEd = document.getElementById("MyEd").value;
+    const MzEd = document.getElementById("MzEd").value;
+    const TEd = document.getElementById("TEd").value;
+
+    window.location.href =
+        "/?csalad=" + encodeURIComponent(csalad) +
+        "&szelveny=" + encodeURIComponent(szelveny) +
+        "&anyag=" + encodeURIComponent(anyag) +
+        "&NEd=" + encodeURIComponent(NEd) +
+        "&VyEd=" + encodeURIComponent(VyEd) +
+        "&VzEd=" + encodeURIComponent(VzEd) +
+        "&MyEd=" + encodeURIComponent(MyEd) +
+        "&MzEd=" + encodeURIComponent(MzEd) +
+        "&TEd=" + encodeURIComponent(TEd) +
+        "&szamitas=1" +
+        "#eredmenyek";
+}
+const gombok = document.querySelectorAll(".tab");
+
+if (window.location.hash === "#eredmenyek") {
+
+    fulValtas("eredmenyek", gombok[3]);
+
+    // A hash törlése az URL-ből, hogy F5-re már a Projekt fül nyíljon meg
+    history.replaceState(
+        null,
+        "",
+        window.location.pathname + window.location.search
+    );
+
+}
+else if (window.location.hash === "#keresztmetszet") {
+
+    fulValtas("keresztmetszet", gombok[1]);
+
+}
+else if (window.location.hash === "#igenybevetelek") {
+
+    fulValtas("igenybevetelek", gombok[2]);
+
+}
+</script>
+
+</body>
+
+</html>

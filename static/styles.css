@@ -1,0 +1,249 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #eef1f4;
+    color: #20252b;
+}
+
+.app {
+    width: 95%;
+    max-width: 1400px;
+    margin: 30px auto;
+    background: white;
+    border: 1px solid #d9dee4;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+.fejlec {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 24px 28px;
+    border-bottom: 1px solid #d9dee4;
+}
+
+.fejlec h1 {
+    margin: 0;
+    font-size: 25px;
+}
+
+.szabvany {
+    font-size: 13px;
+    color: #6d747c;
+}
+
+.tabok {
+    display: flex;
+    gap: 4px;
+
+    padding: 10px 20px 0 20px;
+    background: #f7f8fa;
+    border-bottom: 1px solid #d9dee4;
+}
+
+.tab {
+    padding: 12px 18px;
+
+    border: none;
+    background: transparent;
+
+    font-size: 14px;
+    cursor: pointer;
+
+    border-bottom: 3px solid transparent;
+}
+
+.tab:hover {
+    background: #eceff3;
+}
+
+.tab.aktiv {
+    font-weight: bold;
+    border-bottom: 3px solid #2d6cdf;
+    color: #2d6cdf;
+}
+
+main {
+    min-height: 600px;
+    padding: 24px;
+}
+
+.kartya {
+    border: 1px solid #d9dee4;
+    border-radius: 6px;
+
+    margin-bottom: 20px;
+    padding: 20px;
+}
+
+.kartya h2 {
+    margin-top: 0;
+    font-size: 16px;
+}
+
+.urlap-sor {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+
+    align-items: center;
+    gap: 15px;
+
+    margin-bottom: 14px;
+}
+
+.urlap-sor label {
+    font-size: 14px;
+}
+
+.urlap-sor input {
+    width: 100%;
+    padding: 10px 12px;
+
+    border: 1px solid #bfc6ce;
+    border-radius: 4px;
+
+    font-size: 14px;
+}
+
+.urlap-sor input:focus {
+    outline: none;
+    border-color: #2d6cdf;
+}
+
+.also-sav {
+    display: flex;
+    justify-content: space-between;
+
+    padding: 14px 20px;
+
+    background: #f7f8fa;
+    border-top: 1px solid #d9dee4;
+}
+
+.also-sav button {
+    padding: 9px 14px;
+
+    border: 1px solid #b8bec6;
+    border-radius: 4px;
+
+    background: white;
+
+    cursor: pointer;
+}
+
+.also-sav button:hover {
+    background: #edf0f3;
+}
+
+.bal-gombok,
+.jobb-gombok {
+    display: flex;
+    gap: 8px;
+}
+
+.also-sav .kiemelt {
+    background: #2d6cdf;
+    color: white;
+    border-color: #2d6cdf;
+}.ful-tartalom {
+    display: none;
+}
+
+.ful-tartalom.aktiv-ful {
+    display: block;
+}
+
+.urlap-sor select {
+    width: 100%;
+    padding: 10px 12px;
+
+    border: 1px solid #bfc6ce;
+    border-radius: 4px;
+
+    font-size: 14px;
+    background: white;
+}.keresztmetszet-grid {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 20px;
+}
+
+.adattabla {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.adattabla th,
+.adattabla td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #e0e4e8;
+    text-align: left;
+}
+
+.adattabla th {
+    background: #f5f7f9;
+}
+
+.szelveny-fej h3 {
+    margin-bottom: 8px;
+    font-size: 24px;
+    color: #1f4f7a;
+}
+
+.szelveny-fej p {
+    margin: 3px 0;
+    font-size: 14px;
+}
+
+.szelveny-rajz {
+    margin-top: 10px;
+    border: 1px solid #d9dee4;
+    background: #ffffff;
+    padding: 15px;
+}
+
+.acel {
+    fill: #9fc7dc;
+    stroke: #285c78;
+    stroke-width: 2;
+}
+
+.tengely {
+    stroke: #8a8a8a;
+    stroke-width: 1;
+    stroke-dasharray: 8 8;
+}
+
+.meretvonal {
+    stroke: #555;
+    stroke-width: 1.5;
+}/* Igénybevételek speciális elrendezése */
+
+#igenybevetelek .urlap-sor {
+    display: grid;
+    grid-template-columns: 150px 180px 70px 1fr;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+#igenybevetelek .urlap-sor input {
+    width: 100%;
+}
+
+#igenybevetelek .magyarazat {
+    color: #6d747c;
+    font-size: 14px;
+}
+
+#igenybevetelek .kartya {
+    max-width: 1000px;
+}
