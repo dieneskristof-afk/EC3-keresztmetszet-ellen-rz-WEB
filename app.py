@@ -1,6 +1,13 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, send_file
 import csv
 import math
+import json
+from io import BytesIO
+
+from reportlab.lib.pagesizes import A4
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
 
 app = Flask(__name__)
 
@@ -197,36 +204,46 @@ def index():
         else:
             web_class = 4
 
+        print("lambda_flange =", lambda_flange)
+        print("flange_class =", flange_class)
+        print("lambda_web =", lambda_web)
+        print("alpha =", alpha)
+        print("web_limit_class1 =", web_limit_class1)
+        print("web_limit_class2 =", web_limit_class2)
+        print("psi =", psi)
+        print("web_limit_class3 =", web_limit_class3)
+        print("web_class =", web_class)
+
     section_class = max(flange_class, web_class)
+    print("TESZT OSZTALY:", section_class, "WEB:", web_class, "LAMBDA:", lambda_web)
+    print("CLASS1 HATAR:", web_limit_class1)
+    print("CLASS2 HATAR:", web_limit_class2)
+    print("CLASS3 HATAR:", web_limit_class3)
+    print("ALPHA:", alpha)
+    print("PSI:", psi)
 
     eredmeny = None
 
     if request.args.get("szamitas") == "1":
 
-        # --- NYOMÁSI ELLENÁLLÁS ---
+        # --- NORMÁLERŐ ELLENÁLLÁS ---
 
         A_mm2 = szelveny["A"] * 100
 
         Nc_Rd = A_mm2 * fy / gamma_M0 / 1000
+        Nt_Rd = A_mm2 * fy / gamma_M0 / 1000
 
-        kihasznaltsag_N = abs(NEd) / Nc_Rd
+        if NEd < 0:
+            N_Rd = Nc_Rd
+            N_tipus = "nyomas"
+        elif NEd > 0:
+            N_Rd = Nt_Rd
+            N_tipus = "huzas"
+        else:
+            N_Rd = Nc_Rd
+            N_tipus = None
 
-
-        # --- HAJLÍTÁSI ELLENÁLLÁS Y-Y ---
-
-        Wpl_y_mm3 = szelveny["Wpl_y"] * 1000
-
-        My_Rd = Wpl_y_mm3 * fy / gamma_M0 / 1_000_000
-
-        kihasznaltsag_My = abs(MyEd) / My_Rd
-
-        # --- HAJLÍTÁSI ELLENÁLLÁS Z-Z ---
-
-        Wpl_z_mm3 = szelveny["Wpl_z"] * 1000
-
-        Mz_Rd = Wpl_z_mm3 * fy / gamma_M0 / 1_000_000
-
-        kihasznaltsag_Mz = abs(MzEd) / Mz_Rd
+        kihasznaltsag_N = abs(NEd) / N_Rd
 
         # --- NYÍRÁSI ELLENÁLLÁS Vz ---
 
@@ -235,14 +252,43 @@ def index():
         Vz_Rd = Av_z_mm2 * fy / math.sqrt(3) / gamma_M0 / 1000
 
         kihasznaltsag_Vz = abs(VzEd) / Vz_Rd
+        # --- NAGY NYÍRÓERŐ Vz ---
+        rho_Vz = 0.0
 
-        # --- NORMÁLERŐ + KÉTTENGELYŰ HAJLÍTÁS ---
+        if abs(VzEd) > 0.5 * Vz_Rd:
+            rho_Vz = (2 * abs(VzEd) / Vz_Rd - 1) ** 2
+        else:
+            rho_Vz = 0.0
 
-        kihasznaltsag_NMM = (
-            abs(NEd) / Nc_Rd
-            + abs(MyEd) / My_Rd
-            + abs(MzEd) / Mz_Rd
-)
+        # --- HAJLÍTÁSI ELLENÁLLÁS Y-Y ---
+
+        if section_class <= 2:
+            Wpl_y_mm3 = szelveny["Wpl_y"] * 1000
+
+            if rho_Vz > 0:
+                Aw_mm2 = (szelveny["h"] - 2 * szelveny["tf"]) * szelveny["tw"]
+
+                Wy_mm3 = (
+                    Wpl_y_mm3
+                    - rho_Vz * Aw_mm2**2 / (4 * szelveny["tw"])
+                )
+
+                Wy_mm3 = min(Wy_mm3, Wpl_y_mm3)
+            else:
+                Wy_mm3 = Wpl_y_mm3
+
+        elif section_class == 3:
+            Wy_mm3 = szelveny["Wel_y"] * 1000
+
+        else:
+            Wy_mm3 = None
+
+        if Wy_mm3 is not None:
+            My_Rd = Wy_mm3 * fy / gamma_M0 / 1_000_000
+            kihasznaltsag_My = abs(MyEd) / My_Rd
+        else:
+            My_Rd = None
+            kihasznaltsag_My = None
 
         # --- NYÍRÁSI ELLENÁLLÁS Vy ---
 
@@ -251,6 +297,72 @@ def index():
         Vy_Rd = Av_y_mm2 * fy / math.sqrt(3) / gamma_M0 / 1000
 
         kihasznaltsag_Vy = abs(VyEd) / Vy_Rd
+
+        if abs(VyEd) > 0.5 * Vy_Rd:
+            rho_Vy = (2 * abs(VyEd) / Vy_Rd - 1) ** 2
+        else:
+            rho_Vy = 0.0
+
+
+        # --- HAJLÍTÁSI ELLENÁLLÁS Z-Z ---
+
+        if section_class <= 2:
+            Wz_mm3 = szelveny["Wpl_z"] * 1000
+        elif section_class == 3:
+            Wz_mm3 = szelveny["Wel_z"] * 1000
+        else:
+            Wz_mm3 = None
+
+        if Wz_mm3 is not None:
+            Mz_Rd = Wz_mm3 * fy / gamma_M0 / 1_000_000
+            kihasznaltsag_Mz = abs(MzEd) / Mz_Rd
+        else:
+            Mz_Rd = None
+            kihasznaltsag_Mz = None
+
+
+
+        # --- NORMÁLERŐ + KÉTTENGELYŰ HAJLÍTÁS ---
+
+        if My_Rd is not None and Mz_Rd is not None:
+            kihasznaltsag_NMM = (
+                abs(NEd) / Nc_Rd
+                + abs(MyEd) / My_Rd
+                + abs(MzEd) / Mz_Rd
+            )
+        else:
+            kihasznaltsag_NMM = None
+
+        # --- NORMÁLERŐ + HAJLÍTÁS + NAGY NYÍRÁS ---
+        # Konzervatív burkoló Alex programja szerint
+
+        kihasznaltsag_NMMV = None
+        N_Rd_red = None
+        My_Rd_red = None
+        Mz_Rd_red = None
+
+        if section_class <= 2 and (rho_Vz > 0 or rho_Vy > 0):
+            rho_max = max(rho_Vy, rho_Vz)
+            redukcios_tenyezo = 1.0 - rho_max
+
+            # Eredeti, nyírással még nem redukált hajlítási ellenállások
+            My_Rd_alap = (
+                szelveny["Wpl_y"] * 1000 * fy / gamma_M0 / 1_000_000
+            )
+
+            Mz_Rd_alap = (
+                szelveny["Wpl_z"] * 1000 * fy / gamma_M0 / 1_000_000
+            )
+
+            N_Rd_red = Nc_Rd * redukcios_tenyezo
+            My_Rd_red = My_Rd_alap * redukcios_tenyezo
+            Mz_Rd_red = Mz_Rd_alap * redukcios_tenyezo
+
+            kihasznaltsag_NMMV = (
+                abs(NEd) / N_Rd_red
+                + abs(MyEd) / My_Rd_red
+                + abs(MzEd) / Mz_Rd_red
+        )
 
         # --- CSAVARÁS ---
 
@@ -264,26 +376,51 @@ def index():
     )
 
         # --- EREDMÉNYEK ---
+        # --- ÖSSZESÍTETT EREDMÉNY ---
+        kihasznaltsagok = [
+            kihasznaltsag_N,
+            kihasznaltsag_My,
+            kihasznaltsag_Mz,
+            kihasznaltsag_Vz,
+            kihasznaltsag_Vy,
+            kihasznaltsag_NMM,
+            kihasznaltsag_NMMV,
+        ]
+
+        kihasznaltsagok = [x for x in kihasznaltsagok if x is not None]
+
+        max_kihasznaltsag = max(kihasznaltsagok) if kihasznaltsagok else 0
+        ossz_megfelel = max_kihasznaltsag <= 1.0
 
         eredmeny = {
             "Nc_Rd": Nc_Rd,
+            "Nt_Rd": Nt_Rd,
+            "N_Rd": N_Rd,
+            "N_tipus": N_tipus,
             "kihasznaltsag": kihasznaltsag_N,
             "szazalek": kihasznaltsag_N * 100,
             "megfelel": kihasznaltsag_N <= 1.0,
 
             "My_Rd": My_Rd,
             "kihasznaltsag_My": kihasznaltsag_My,
-            "szazalek_My": kihasznaltsag_My * 100,
-            "megfelel_My": kihasznaltsag_My <= 1.0,
+            "szazalek_My": kihasznaltsag_My * 100 if kihasznaltsag_My is not None else None,
+            "megfelel_My": kihasznaltsag_My <= 1.0 if kihasznaltsag_My is not None else None,
 
             "Mz_Rd": Mz_Rd,
             "kihasznaltsag_Mz": kihasznaltsag_Mz,
-            "szazalek_Mz": kihasznaltsag_Mz * 100,
-            "megfelel_Mz": kihasznaltsag_Mz <= 1.0,
+            "szazalek_Mz": kihasznaltsag_Mz * 100 if kihasznaltsag_Mz is not None else None,
+            "megfelel_Mz": kihasznaltsag_Mz <= 1.0 if kihasznaltsag_Mz is not None else None,
 
             "NMM_kihasznaltsag": kihasznaltsag_NMM,
-            "NMM_szazalek": kihasznaltsag_NMM * 100,
-            "NMM_megfelel": kihasznaltsag_NMM <= 1.0,
+            "NMM_szazalek": kihasznaltsag_NMM * 100 if kihasznaltsag_NMM is not None else None,
+            "NMM_megfelel": kihasznaltsag_NMM <= 1.0 if kihasznaltsag_NMM is not None else None,
+            "NMMV_kihasznaltsag": kihasznaltsag_NMMV,
+            "NMMV_szazalek": kihasznaltsag_NMMV * 100 if kihasznaltsag_NMMV is not None else None,
+            "NMMV_megfelel": kihasznaltsag_NMMV <= 1.0 if kihasznaltsag_NMMV is not None else None,
+
+            "N_Rd_red": N_Rd_red,
+            "My_Rd_red": My_Rd_red,
+            "Mz_Rd_red": Mz_Rd_red,
             
 
             "Vz_Rd": Vz_Rd,
@@ -302,6 +439,10 @@ def index():
             "flange_class": flange_class,
             "web_class": web_class,
             "section_class": section_class,
+
+            "max_kihasznaltsag": max_kihasznaltsag,
+            "max_szazalek": max_kihasznaltsag * 100,
+            "ossz_megfelel": ossz_megfelel,
     }
 
     return render_template(
@@ -322,6 +463,90 @@ def index():
 
         eredmeny=eredmeny
 )
+@app.route("/pdf")
+def pdf_export():
+    csalad = request.args.get("csalad", "IPE")
+    szelveny_nev = request.args.get("szelveny", "IPE 200")
+    anyag = request.args.get("anyag", "S235")
+    eredmenyek_json = request.args.get("eredmenyek", "[]")
+
+    try:
+        eredmeny_sorok = json.loads(eredmenyek_json)
+    except json.JSONDecodeError:
+        eredmeny_sorok = []
+
+    NEd = float(request.args.get("NEd", 0) or 0)
+    VyEd = float(request.args.get("VyEd", 0) or 0)
+    VzEd = float(request.args.get("VzEd", 0) or 0)
+    MyEd = float(request.args.get("MyEd", 0) or 0)
+    MzEd = float(request.args.get("MzEd", 0) or 0)
+    TEd = float(request.args.get("TEd", 0) or 0)
+
+    szelveny = SECTIONS[csalad][szelveny_nev]
+    fy = ACELMINOSEGEK[anyag]
+    buffer = BytesIO()
+
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        title="Acél keresztmetszet ellenőrző - EC3"
+    )
+
+    styles = getSampleStyleSheet()
+
+    tartalom = [
+        Paragraph("Acél keresztmetszet ellenőrző - EC3", styles["Title"]),
+        Spacer(1, 20),
+
+        Paragraph("Keresztmetszet", styles["Heading2"]),
+        Spacer(1, 8),
+
+        Table([
+            ["Szelvény", szelveny_nev],
+            ["Acélminőség", anyag],
+            ["fy [MPa]", f"{fy:.0f}"],
+            ["h [mm]", f'{szelveny["h"]:.1f}'],
+            ["b [mm]", f'{szelveny["b"]:.1f}'],
+            ["tw [mm]", f'{szelveny["tw"]:.1f}'],
+            ["tf [mm]", f'{szelveny["tf"]:.1f}'],
+            ["A [cm2]", f'{szelveny["A"]:.2f}'],
+        ]),
+
+        Spacer(1, 20),
+
+        Paragraph("Igénybevételek", styles["Heading2"]),
+        Spacer(1, 8),
+
+        Table([
+            ["NEd [kN]", f"{NEd:.2f}"],
+            ["VyEd [kN]", f"{VyEd:.2f}"],
+            ["VzEd [kN]", f"{VzEd:.2f}"],
+            ["MyEd [kNm]", f"{MyEd:.2f}"],
+            ["MzEd [kNm]", f"{MzEd:.2f}"],
+            ["TEd [kNm]", f"{TEd:.2f}"],
+        ]),
+    ]
+    if eredmeny_sorok:
+        tartalom.append(Spacer(1, 20))
+        tartalom.append(Paragraph("Eredmények összegzése", styles["Heading2"]))
+        tartalom.append(Spacer(1, 8))
+
+        eredmeny_tabla = Table(
+            eredmeny_sorok,
+            colWidths=[280, 90, 90]
+        )
+
+        tartalom.append(eredmeny_tabla)
+    doc.build(tartalom)
+
+    buffer.seek(0)
+
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name="EC3_dokumentacio.pdf",
+        mimetype="application/pdf"
+    )
     
 if __name__ == "__main__":
     app.run(debug=True)

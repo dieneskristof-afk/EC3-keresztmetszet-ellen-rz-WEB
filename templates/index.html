@@ -403,12 +403,23 @@
 
 
 {% if eredmeny %}
+{% if NEd != 0 %}
     <div class="kartya" style="margin-top: 20px;">
-        <h3>Nyomási keresztmetszeti ellenállás</h3>
+        <h3>
+            {% if eredmeny["N_tipus"] == "huzas" %}
+                Húzási keresztmetszeti ellenállás
+            {% else %}
+                Nyomási keresztmetszeti ellenállás
+            {% endif %}
+        </h3>
 
         <p>
+            {% if eredmeny["N_tipus"] == "huzas" %}
+            N<sub>t,Rd</sub> =
+        {% else %}
             N<sub>c,Rd</sub> =
-            {{ "%.2f"|format(eredmeny["Nc_Rd"]) }} kN
+        {% endif %}
+        {{ "%.2f"|format(eredmeny["N_Rd"]) }} kN
         </p>
 
         <p>
@@ -424,66 +435,127 @@
             {% endif %}
         </p>
     </div>
+    {% endif %}
+
+
+    {% if MyEd != 0 %}
     <div class="kartya" style="margin-top: 20px;">
     <h3>Hajlítási ellenállás y-y</h3>
 
     <p>
         M<sub>y,Rd</sub> =
-        {{ "%.2f"|format(eredmeny["My_Rd"]) }} kNm
+        {% if eredmeny["My_Rd"] is not none %}
+            {{ "%.2f"|format(eredmeny["My_Rd"]) }} kNm
+        {% else %}
+            nem számítható effektív keresztmetszet nélkül
+        {% endif %}
     </p>
+
+    <p>
+        Alkalmazott keresztmetszeti tényező =
+        {% if eredmeny["section_class"] <= 2 %}
+            Wpl,y
+        {% elif eredmeny["section_class"] == 3 %}
+            Wel,y
+        {% else %}
+            effektív keresztmetszet szükséges
+        {% endif %}
+</p>
 
     <p>
         Kihasználtság =
-        {{ "%.1f"|format(eredmeny["szazalek_My"]) }} %
+        {% if eredmeny["szazalek_My"] is not none %}
+            {{ "%.1f"|format(eredmeny["szazalek_My"]) }} %
+        {% else %}
+            —
+        {% endif %}
     </p>
 
     <p>
-        {% if eredmeny["megfelel_My"] %}
+        {% if eredmeny["megfelel_My"] is none %}
+            <strong>NEM ÉRTÉKELHETŐ – 4. osztályú keresztmetszet</strong>
+        {% elif eredmeny["megfelel_My"] %}
             <strong>MEGFELEL</strong>
         {% else %}
             <strong>NEM FELEL MEG</strong>
         {% endif %}
     </p>
 </div>
+{% endif %}
+
+{% if MzEd != 0 %}
 <div class="kartya" style="margin-top: 20px;">
     <h3>Hajlítási ellenállás z-z</h3>
 
     <p>
         M<sub>z,Rd</sub> =
-        {{ "%.2f"|format(eredmeny["Mz_Rd"]) }} kNm
+        {% if eredmeny["Mz_Rd"] is not none %}
+            {{ "%.2f"|format(eredmeny["Mz_Rd"]) }} kNm
+        {% else %}
+            nem számítható effektív keresztmetszet nélkül
+        {% endif %}
     </p>
+
+    <p>
+    Alkalmazott keresztmetszeti tényező =
+        {% if eredmeny["section_class"] <= 2 %}
+            Wpl,z
+        {% elif eredmeny["section_class"] == 3 %}
+            Wel,z
+        {% else %}
+            effektív keresztmetszet szükséges
+        {% endif %}
+</p>
 
     <p>
         Kihasználtság =
-        {{ "%.1f"|format(eredmeny["szazalek_Mz"]) }} %
+        {% if eredmeny["szazalek_Mz"] is not none %}
+            {{ "%.1f"|format(eredmeny["szazalek_Mz"]) }} %
+        {% else %}
+            —
+        {% endif %}
     </p>
 
     <p>
-        {% if eredmeny["megfelel_Mz"] %}
+        {% if eredmeny["megfelel_Mz"] is none %}
+            <strong>NEM ÉRTÉKELHETŐ – 4. osztályú keresztmetszet</strong>
+        {% elif eredmeny["megfelel_Mz"] %}
             <strong>MEGFELEL</strong>
         {% else %}
             <strong>NEM FELEL MEG</strong>
         {% endif %}
     </p>
 </div>
+{% endif %}
 
+
+{% if NEd != 0 and (MyEd != 0 or MzEd != 0) %}
 <div class="kartya" style="margin-top: 20px;">
     <h3>Normálerő - hajlítás</h3>
 
     <p>
         Kihasználtság =
-        {{ "%.1f"|format(eredmeny["NMM_szazalek"]) }} %
+        {% if eredmeny["NMM_szazalek"] is not none %}
+            {{ "%.1f"|format(eredmeny["NMM_szazalek"]) }} %
+        {% else %}
+            —
+        {% endif %}
     </p>
 
     <p>
-        {% if eredmeny["NMM_megfelel"] %}
+        {% if eredmeny["NMM_megfelel"] is none %}
+            <strong>NEM ÉRTÉKELHETŐ – 4. osztályú keresztmetszet</strong>
+        {% elif eredmeny["NMM_megfelel"] %}
             <strong>MEGFELEL</strong>
         {% else %}
             <strong>NEM FELEL MEG</strong>
         {% endif %}
     </p>
 </div>
+{% endif %}
 
+
+{% if VzEd != 0 %}
 <div class="kartya" style="margin-top: 20px;">
     <h3>Nyírási ellenállás Vz</h3>
 
@@ -505,7 +577,9 @@
         {% endif %}
     </p>
 </div>
+{% endif %}
 
+{% if VyEd != 0 %}
 <div class="kartya" style="margin-top: 20px;">
     <h3>Nyírási ellenállás Vy</h3>
 
@@ -527,6 +601,7 @@
         {% endif %}
     </p>
 </div>
+{% endif %}
 
 {% if eredmeny["csavaras_figyelmeztetes"] %}
 <div class="kartya" style="margin-top: 20px;">
@@ -541,6 +616,10 @@
         <strong>{{ eredmeny["csavaras_figyelmeztetes"] }}</strong>
     </p>
 </div>
+
+{% endif %}
+
+
 <div class="kartya" style="margin-top: 20px;">
     <h3>Keresztmetszeti osztály</h3>
 
@@ -559,7 +638,7 @@
         <strong>{{ eredmeny["section_class"] }}. osztály</strong>
     </p>
 </div>
-{% endif %}
+
 {% endif %}
     </section>
 
@@ -569,14 +648,164 @@
     <section id="eredmenyek" class="ful-tartalom">
 
         <section class="kartya">
-
             <h2>Eredmények</h2>
 
-            <p>Még nincs számítás.</p>
-
+            {% if not eredmeny %}
+                <p>Még nincs számítás.</p>
+            {% else %}
+                <p>A keresztmetszeti ellenőrzés eredményeinek összefoglalása.</p>
+            {% endif %}
         </section>
 
-    </section>
+
+{% if eredmeny %}
+<div class="kartya" style="margin-top: 20px;">
+    <h3>Összegzés</h3>
+
+    <table id="osszegzesTabla" style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <td>Keresztmetszeti osztály</td>
+            <td>{{ eredmeny["section_class"] }}. osztály</td>
+            <td>–</td>
+        </tr>
+        <tr>
+            <td>&nbsp;&nbsp;Öv osztálya</td>
+            <td>{{ eredmeny["flange_class"] }}. osztály</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>&nbsp;&nbsp;Gerinc osztálya</td>
+            <td>{{ eredmeny["web_class"] }}. osztály</td>
+            <td></td>
+        </tr>
+        {% if NEd != 0 %}
+        <tr>
+            <td>
+            {% if eredmeny["N_tipus"] == "huzas" %}
+                Húzási keresztmetszeti ellenállás
+            {% else %}
+                Nyomási keresztmetszeti ellenállás
+            {% endif %}
+        </td>
+            <td>{{ "%.1f"|format(eredmeny["szazalek"]) }} %</td>
+            <td>
+                {% if eredmeny["megfelel"] %}
+                    <strong>OK</strong>
+                {% else %}
+                    <strong>NEM FELEL MEG</strong>
+                {% endif %}
+            </td>
+        </tr>
+        {% endif %}
+
+        {% if MyEd != 0 %}
+        <tr>
+            <td>Hajlítási ellenállás y-y</td>
+            <td>{{ "%.1f"|format(eredmeny["szazalek_My"]) }} %</td>
+            <td>
+                {% if eredmeny["megfelel_My"] %}
+                    <strong>OK</strong>
+                {% else %}
+                    <strong>NEM FELEL MEG</strong>
+                {% endif %}
+            </td>
+        </tr>
+        {% endif %}
+
+        {% if MzEd != 0 %}
+        <tr>
+            <td>Hajlítási ellenállás z-z</td>
+            <td>{{ "%.1f"|format(eredmeny["szazalek_Mz"]) }} %</td>
+            <td>
+                {% if eredmeny["megfelel_Mz"] %}
+                    <strong>OK</strong>
+                {% else %}
+                    <strong>NEM FELEL MEG</strong>
+                {% endif %}
+            </td>
+        </tr>
+        {% endif %}
+
+        {% if VzEd != 0 %}
+        <tr>
+            <td>Nyírási ellenállás - gerinccel párhuzamos (Vz)</td>
+            <td>{{ "%.1f"|format(eredmeny["szazalek_Vz"]) }} %</td>
+            <td>
+                {% if eredmeny["megfelel_Vz"] %}
+                    <strong>OK</strong>
+                {% else %}
+                    <strong>NEM FELEL MEG</strong>
+                {% endif %}
+            </td>
+        </tr>
+        {% endif %}
+
+        {% if VyEd != 0 %}
+        <tr>
+            <td>Nyírási ellenállás - övvel párhuzamos (Vy)</td>
+            <td>{{ "%.1f"|format(eredmeny["szazalek_Vy"]) }} %</td>
+            <td>
+                {% if eredmeny["megfelel_Vy"] %}
+                    <strong>OK</strong>
+                {% else %}
+                    <strong>NEM FELEL MEG</strong>
+                {% endif %}
+            </td>
+        </tr>
+        {% endif %}
+
+        {% if NEd != 0 and (MyEd != 0 or MzEd != 0) %}
+        <tr>
+            <td>Normálerő - hajlítás</td>
+            <td>
+                {% if eredmeny["NMM_szazalek"] is not none %}
+                    {{ "%.1f"|format(eredmeny["NMM_szazalek"]) }} %
+                {% else %}
+                    —
+                {% endif %}
+            </td>
+            <td>
+                {% if eredmeny["NMM_megfelel"] %}
+                    <strong>OK</strong>
+                {% elif eredmeny["NMM_megfelel"] is none %}
+                    <strong>NEM ÉRTÉKELHETŐ</strong>
+                {% else %}
+                    <strong>NEM FELEL MEG</strong>
+                {% endif %}
+            </td>
+        </tr>
+        {% endif %}
+        {% if eredmeny["NMMV_szazalek"] is not none %}
+        <tr>
+            <td>Normálerő + hajlítás + nagy nyírás</td>
+            <td>{{ "%.1f"|format(eredmeny["NMMV_szazalek"]) }} %</td>
+            <td>
+                {% if eredmeny["NMMV_megfelel"] %}
+                    <strong>OK</strong>
+                {% else %}
+                    <strong>NEM FELEL MEG</strong>
+                {% endif %}
+            </td>
+        </tr>
+        {% endif %}
+        <tr>
+            <td><strong>Mértékadó kihasználtság</strong></td>
+            <td><strong>{{ "%.1f"|format(eredmeny["max_szazalek"]) }} %</strong></td>
+            <td>
+                {% if eredmeny["ossz_megfelel"] %}
+                    <strong>MEGFELEL</strong>
+                {% else %}
+                    <strong>NEM FELEL MEG</strong>
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+</div>
+{% endif %}
+        </section>
+
+
 
         </main>
 
@@ -589,7 +818,7 @@
 
             <div class="jobb-gombok">
                 <button class="kiemelt" type="button" onclick="szamitasInditas()">SZÁMÍTÁS</button>
-                <button>PDF dokumentáció</button>
+                <button type="button" onclick="pdfExport()">PDF dokumentáció</button>
             </div>
 
         </footer>
@@ -659,12 +888,12 @@ function szamitasInditas() {
     const szelveny = document.getElementById("szelveny").value;
     const anyag = document.getElementById("anyag").value;
 
-    const NEd = document.getElementById("NEd").value;
-    const VyEd = document.getElementById("VyEd").value;
-    const VzEd = document.getElementById("VzEd").value;
-    const MyEd = document.getElementById("MyEd").value;
-    const MzEd = document.getElementById("MzEd").value;
-    const TEd = document.getElementById("TEd").value;
+    const NEd = document.getElementById("NEd").value || 0;
+    const VyEd = document.getElementById("VyEd").value || 0;
+    const VzEd = document.getElementById("VzEd").value || 0;
+    const MyEd = document.getElementById("MyEd").value || 0;
+    const MzEd = document.getElementById("MzEd").value || 0;
+    const TEd = document.getElementById("TEd").value || 0;
 
     window.location.href =
         "/?csalad=" + encodeURIComponent(csalad) +
@@ -679,29 +908,40 @@ function szamitasInditas() {
         "&szamitas=1" +
         "#eredmenyek";
 }
-const gombok = document.querySelectorAll(".tab");
+function pdfExport() {
+    const params = new URLSearchParams(window.location.search);
 
-if (window.location.hash === "#eredmenyek") {
+    if (params.get("szamitas") !== "1") {
+        alert("Először végezd el a számítást!");
+        return;
+    }
 
-    fulValtas("eredmenyek", gombok[3]);
+    const tabla = document.getElementById("osszegzesTabla");
 
-    // A hash törlése az URL-ből, hogy F5-re már a Projekt fül nyíljon meg
-    history.replaceState(
-        null,
-        "",
-        window.location.pathname + window.location.search
-    );
+    if (!tabla) {
+        alert("Nincs exportálható eredmény!");
+        return;
+    }
 
-}
-else if (window.location.hash === "#keresztmetszet") {
+    const sorok = [];
 
-    fulValtas("keresztmetszet", gombok[1]);
+    tabla.querySelectorAll("tr").forEach(function(sor) {
+        const cellak = sor.querySelectorAll("td");
 
-}
-else if (window.location.hash === "#igenybevetelek") {
+        if (cellak.length > 0) {
+            const adatok = [];
 
-    fulValtas("igenybevetelek", gombok[2]);
+            cellak.forEach(function(cella) {
+                adatok.push(cella.innerText.trim());
+            });
 
+            sorok.push(adatok);
+        }
+    });
+
+    params.set("eredmenyek", JSON.stringify(sorok));
+
+    window.location.href = "/pdf?" + params.toString();
 }
 </script>
 
